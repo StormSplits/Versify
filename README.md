@@ -6,6 +6,13 @@ Runs on Node.js 20+ using only built-in modules. No API key, network connection 
 
 ## What it does
 
+> [!WARNING]
+> **Large indexes and token usage:** Versify's generated `versify-out/graph.json` can become large, especially when indexing many Verse files or including Epic's API digests. This is a separate navigation index; Versify does not generate or modify Epic's `.digest.verse` files. Even a small project can produce a large index when full API digests are included.
+>
+> Versify may be useful for large projects and repeated cross-file investigations because focused queries can reduce unrelated source reads. For small projects or one-off questions, direct source reading may be simpler: indexing, skill instructions, tool definitions and query responses can add unnecessary overhead. Local index size is not itself an AI token charge, and building the index makes no model calls. **Do not load the entire graph into the AI's context.** Prefer narrow queries with `--limit`, paged MCP results, and source-only indexing when API relationships are unnecessary. `--project-only` filters query results; it does not shrink an existing index.
+>
+> **Research finding:** [The original Graphify implementation](https://github.com/Howell5/graphify-ts#what-it-does) describes avoiding wasted searches, but its README provides no measured token-savings benchmark. A [different graphify-ts fork](https://github.com/spacethree/graphify-ts#on-a-real-production-codebase-measured-today) reports 615,190 versus 233,508 input tokens (about 62% fewer) for one question on a 1,268-file JS/TS project, while also [reporting roughly 13% higher cold-start costs](https://github.com/spacethree/graphify-ts#honest-disclosure). Those are project-reported results for a different implementation, not independent verification or Verse evidence. **Versify has not been benchmarked for token savings; no percentage or cost reduction is guaranteed.** Compare equivalent tasks on your own project before assuming savings.
+
 - Indexes `.verse` source and generated `.digest.verse` API files.
 - Finds classes, modules, functions, extension methods, fields, enums and other declarations with file and line locations.
 - Traces imports, inheritance, calls, construction and event-handler subscriptions.
