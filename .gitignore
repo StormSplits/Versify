@@ -1,0 +1,10 @@
+node_modules/
+versify-out/
+graphify-out/
+*.tgz
+*.zip
+*.lock
+*.tmp
+.versify-install.json
+.DS_Store
+Thumbs.db

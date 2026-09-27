@@ -1,0 +1,3 @@
+interface:
+  display_name: "Versify"
+  short_description: "Index and navigate Verse code and UEFN API digests"

@@ -1,0 +1,17 @@
+{
+  "name": "versify-verse",
+  "version": "1.0.0",
+  "description": "Portable Verse code navigation CLI, Agent Skill and local MCP server",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "bin": { "versify": "scripts/versify.mjs", "versify-mcp": "scripts/versify-mcp.mjs", "versify-install": "scripts/install.mjs" },
+  "exports": { ".": "./scripts/verse-graph.mjs", "./parser": "./scripts/verse-parser.mjs" },
+  "files": ["SKILL.md", "agents", "scripts", "references", "README.md", "LICENSE"],
+  "scripts": { "test": "node --test scripts/versify.test.mjs scripts/integration.test.mjs", "verify": "node scripts/verify.mjs" },
+  "license": "MIT",
+  "author": "Shubham Singhania",
+  "repository": { "type": "git", "url": "git+https://github.com/StormSplits/Versify.git" },
+  "homepage": "https://github.com/StormSplits/Versify#readme",
+  "bugs": { "url": "https://github.com/StormSplits/Versify/issues" },
+  "keywords": ["verse", "uefn", "agent-skills", "mcp", "code-navigation"]
+}
