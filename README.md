@@ -21,6 +21,76 @@ Runs on Node.js 20+ using only built-in modules. No API key, network connection 
 - Supports callers/callees, relationship paths, snapshot comparisons and searchable semantic labels.
 - Exposes the same navigation through a CLI, Agent Skill and local MCP server, plus context export for ordinary chat apps.
 
+## When Versify is useful
+
+**Use Versify when the question is “where is this behavior implemented, and what connects to it?”** Its main benefit is giving an agent a reusable navigation map with source locations. Potential token savings come from using that map to select relevant code; they are not a prerequisite for the tool being useful.
+
+| Situation | How Versify helps | Appropriate scope |
+| --- | --- | --- |
+| A project has separate inventory, combat, UI and progression systems | Find the relevant definitions and trace recorded calls across files before reading implementations | Build the project once, then make focused queries |
+| A button or trigger produces unexpected behavior | Locate the setup function and recorded subscription handlers, then inspect their source | Include `subscribes` as well as `calls` |
+| You are changing a shared helper | Find recorded callers to identify code worth reviewing after the change | Query callers, edit, refresh and validate in UEFN |
+| You need the API declaration used by a device | Search the installed build's generated API definitions and follow resolved relationships | Include the current `.vproject` and its digests |
+| You only need to change one message in a short, known file | Indexing may add little value; read that file directly | No index needed |
+
+The graph is a starting point for investigation. Dynamic calls, ambiguous overloads and unsupported resolution cases can be missing from the resolved edges, so it is not an exhaustive refactoring checklist or a runtime debugger.
+
+### Example 1: trace a button's handler
+
+Suppose your project contains this illustrative device, with `OnPressed` implemented elsewhere in the same class:
+
+```verse
+shop_device := class(creative_device):
+    @editable
+    BuyButton:button_device = button_device{}
+
+    OnBegin<override>()<suspends>:void =
+        BuyButton.InteractedWithEvent.Subscribe(OnPressed)
+
+    OnPressed(Agent:agent):void =
+        GrantReward(Agent)
+
+    GrantReward(Agent:agent):void =
+        Print("Grant the configured reward here")
+```
+
+This is a navigation example, not a complete shop implementation; use the usual Devices and Simulation imports in a real file. From the source root, with the CLI installed:
+
+```sh
+versify build .
+versify query versify-out/graph.json shop_device.OnBegin --exact
+versify callees versify-out/graph.json shop_device.OnBegin --relations calls,subscribes
+versify callees versify-out/graph.json shop_device.OnPressed
+versify callers versify-out/graph.json shop_device.GrantReward
+```
+
+The subscription query points to `OnPressed`; the next query connects it to `GrantReward`. The agent can open those definitions at the returned line numbers. The external `Subscribe` method may remain unresolved without API digests, while the local handler relationship is still useful. No need to feed the entire project or graph into the conversation.
+
+Suggested agent request: **“Use Versify to trace which handler the buy button subscribes to and what that handler calls. Read those functions and explain the flow; flag unresolved targets.”**
+
+### Example 2: review a shared function change
+
+You want to change `inventory_service.AddItem`, which is used by multiple gameplay systems. The names below are illustrative; substitute symbols from your project:
+
+```sh
+versify query versify-out/graph.json AddItem --project-only --limit 10
+versify callers versify-out/graph.json inventory_service.AddItem
+# After editing the actual source file:
+versify update versify-out/graph.json Systems/inventory_service.verse
+```
+
+Use the returned caller locations to review affected code. If the name is ambiguous, use its exact ID from the first query. Check unresolved references and validate the change in UEFN; callers alone cannot prove that every use has been found.
+
+Suggested agent request: **“Before changing AddItem, use Versify to find its recorded callers. Read the relevant call sites, make the change, refresh the index, and describe any unresolved dependencies.”**
+
+### Example 3: choose the right index size
+
+- **One short device, one text change:** open the `.verse` file directly. Building a graph and adding tool instructions may take more work than the task itself.
+- **Many Verse files, repeated code questions:** start with `versify build .`, then use narrow queries such as `versify query versify-out/graph.json GrantReward --project-only --limit 10`. Reuse the index and refresh it after edits. This avoids repeatedly searching unrelated systems.
+- **A small device that depends on unfamiliar Epic APIs:** a digest-inclusive index may still help. Build with `versify build . --vproject /path/to/Project.vproject`, then query a specific API symbol such as `creative_device --exact --limit 5`. The index can be large because it includes external definitions, even though your own source is small.
+
+For the last example, the complete query is `versify query versify-out/graph.json creative_device --exact --limit 5`. Adding `--project-only` would hide the external API definitions you are trying to inspect. For any example, keep the graph on disk and send only relevant results to the agent. Query limits count results, not tokens; long signatures and subsequent source reads still consume context. Measure whole-session usage on comparable tasks if token cost is your main concern.
+
 ## Requirements
 
 - **Node.js 20 or newer** (`node --version`).
