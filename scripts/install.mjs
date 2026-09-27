@@ -4,6 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { isMain } from './entrypoint.mjs';
 
 const receiptName = '.versify-install.json';
 function inventory(root) {
@@ -66,6 +67,6 @@ export function main(args = process.argv.slice(2)) {
   }
   console.log(JSON.stringify(installSkill(options), null, 2));
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   try { main(); } catch (error) { console.error(`Versify: ${error.message}`); process.exitCode = 1; }
 }

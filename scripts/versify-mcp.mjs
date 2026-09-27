@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
-import { fileURLToPath } from 'node:url';
+import { isMain } from './entrypoint.mjs';
 import { buildIndex, refresh, readJSON, writeJSON, acquireLock, findSymbol, neighbors, fileSymbols, shortestPath, status, exportContext, VERSION } from './verse-graph.mjs';
 
 const text = { type: 'string' };
@@ -111,6 +111,6 @@ export function main(argv = process.argv.slice(2)) {
     if (result) process.stdout.write(JSON.stringify(result) + '\n');
   });
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   try { main(); } catch (error) { console.error(`Versify: ${error.message}`); process.exitCode = 1; }
 }

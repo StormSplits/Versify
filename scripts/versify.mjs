@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { isMain } from './entrypoint.mjs';
 import { buildIndex, refresh, readJSON, writeJSON, acquireLock, findSymbol, neighbors, fileSymbols, shortestPath, graphDiff, labelNodes, status, exportContext, VERSION } from './verse-graph.mjs';
 
 const HELP = `Versify ${VERSION} - local Verse code navigation (Node.js 20+)
@@ -125,6 +125,6 @@ export async function main(argv = process.argv.slice(2)) {
   emit(result, o.json);
   } finally { release?.(); }
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isMain(import.meta.url)) {
   main().catch(error => { console.error(`Versify: ${error.message}`); process.exitCode = 1; });
 }

@@ -100,6 +100,20 @@ test('distribution manifest only includes portable files', () => {
   assert.equal(pkg.engines.node, '>=20'); assert.ok(!pkg.dependencies);
   assert.ok(!pkg.files.some(f => f.includes('graph.json') || f.includes('test-output')));
 });
+test('all executable entrypoints run through a linked directory', t => {
+  const root = fixture(t), installed = path.join(root, 'installed');
+  installSkill({ destination: installed });
+  const alias = path.join(root, 'linked');
+  fs.symlinkSync(installed, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  const run = (script, args, input) => spawnSync(process.execPath, [path.join(alias, 'scripts', script), ...args], { encoding: 'utf8', input });
+  const cli = run('versify.mjs', ['build', root, '--json']);
+  assert.equal(cli.status, 0, cli.stderr); assert.ok(cli.stdout.trim(), 'CLI must not silently skip startup');
+  assert.equal(JSON.parse(cli.stdout).files, 1);
+  const installer = run('install.mjs', ['--dest', path.join(root, 'preview'), '--dry-run']);
+  assert.equal(installer.status, 0, installer.stderr); assert.equal(JSON.parse(installer.stdout).dryRun, true);
+  const mcp = run('versify-mcp.mjs', ['--root', root], JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-11-25' } }) + '\n');
+  assert.equal(mcp.status, 0, mcp.stderr); assert.equal(JSON.parse(mcp.stdout).result.serverInfo.name, 'versify');
+});
 test('uninstall removes only the unchanged installed skill and preserves neighboring files', t => {
   const root = fixture(t), destination = path.join(root, 'installed'); installSkill({ destination });
   const preview = installSkill({ destination, uninstall: true, dryRun: true }); assert.equal(preview.uninstalled, false); assert.equal(fs.existsSync(destination), true);
